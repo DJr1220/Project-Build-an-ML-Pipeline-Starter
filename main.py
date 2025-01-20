@@ -70,8 +70,8 @@ def go(config: DictConfig):
 
         if "data_check" in active_steps:
             ##################
-            # source = src/data_check #
-            # config.yaml [data_check] and [etl]           #
+            # source = src/data_check             #
+            # config.yaml [data_check] and [etl] #
             ##################
             mlflow.run(
             os.path.join(hydra.utils.get_original_cwd(), "src", "data_check"),
@@ -87,9 +87,18 @@ def go(config: DictConfig):
 
         if "data_split" in active_steps:
             ##################
-            # Implement here #
+            # source = components/train_val_test_split/MLproject #
+            # config.yaml [modeling]                             #
             ##################
-            pass
+            mlflow.run(
+            f"{config['main']['components_repository']}/train_val_test_split",'main',
+            parameters = {
+                "input": "clean_sample.csv:latest",
+                "test_size": str(config["modeling"]["test_size"]),
+                "random_seed": str(config["modeling"]["random_seed"]),
+                "stratify_by": config["modeling"]["stratify_by"],
+             }
+        )
 
         if "train_random_forest" in active_steps:
 
@@ -102,10 +111,23 @@ def go(config: DictConfig):
             # step
 
             ##################
-            # Implement here #
+            # source = components/train_random_forest/MLproject #
+            # config.yaml [modeling]                            #
             ##################
+            mlflow.run(
+            os.path.join(hydra.utils.get_original_cwd(), "src", "train_random_forest"),
+            entry_point="main",
+            parameters={
+                "trainval_artifact": "trainval_data.csv:latest",  
+                "val_size": config["modeling"]["val_size"],
+                "random_seed": config["modeling"]["random_seed"],
+                "stratify_by": config["modeling"]["stratify_by"],
+                "rf_config": rf_config,
+                "max_tfidf_features": config["modeling"]["max_tfidf_features"],
+                "output_artifact": "random_forest_export"
+             },
+            )
 
-            pass
 
         if "test_regression_model" in active_steps:
 
