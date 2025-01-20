@@ -91,7 +91,8 @@ def go(config: DictConfig):
             # config.yaml [modeling]                             #
             ##################
             mlflow.run(
-            f"{config['main']['components_repository']}/train_val_test_split",'main',
+            os.path.join(config['main']['components_repository'], "train_val_test_split"),
+            entry_point="main",
             parameters = {
                 "input": "clean_sample.csv:latest",
                 "test_size": str(config["modeling"]["test_size"]),
@@ -111,7 +112,7 @@ def go(config: DictConfig):
             # step
 
             ##################
-            # source = components/train_random_forest/MLproject #
+            # source = src/train_random_forest/MLproject #
             # config.yaml [modeling]                            #
             ##################
             mlflow.run(
@@ -126,16 +127,23 @@ def go(config: DictConfig):
                 "max_tfidf_features": config["modeling"]["max_tfidf_features"],
                 "output_artifact": "random_forest_export"
              },
-            )
+        )
 
 
         if "test_regression_model" in active_steps:
 
             ##################
-            # Implement here #
+            # source = components/est_regression_model/MLproject #
+            # config.yaml [modeling]                            #
             ##################
-
-            pass
+            mlflow.run(
+            os.path.join(config['main']['components_repository'], "test_regression_model"),
+            entry_point="main",
+            parameters={
+                "mlflow_model": "random_forest_export:prod",
+                "test_dataset": "test_data.csv:latest"    
+             },
+        )
 
 
 if __name__ == "__main__":
